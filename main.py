@@ -11,6 +11,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.clear.clicked.connect(self.clear_list)
 
         self.show()
+    
+    def add_it(self):
+        item = self.input.text()
+        if item != "":
+            self.list.addItem(item)
+            self.input.setText("")
+
+    def delete_it(self):
+        current = self.list.currentRow()
+        self.list.takeItem(current)
+
+    def clear_list(self):
+        self.list.clear()
 
 app = QtWidgets.QApplication([])
 mw = MainWindow()
