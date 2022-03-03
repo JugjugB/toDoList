@@ -70,8 +70,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # Function to add item in input box
     def add_it(self):
         item = self.input.text()
-        if item != "":
-            self.list.addItem(item)
+        if item != "" and item.isspace() != True:
+            self.list.addItem(f'{self.list.count() + 1}.  {item}')
             self.input.setText("")
     
     # Deletes selected row
@@ -82,9 +82,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # Clears list
     def clear_list(self):
         self.list.clear()
-
-
-
 
 app = QtWidgets.QApplication([])
 mw = MainWindow()
