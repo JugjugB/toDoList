@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QVBoxLayout, QHBoxLayout 
 from design import Ui_MainWindow
 import sqlite3
 
@@ -20,6 +20,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.setWindowTitle("To-Do List")
+
+        # Set layouts (for window scaling)
+        mainlayout = QVBoxLayout()
+        mainlayout.addWidget(self.input)
+        buttonslayout = QHBoxLayout()
+        buttonslayout.addWidget(self.deleteItem)
+        buttonslayout.addWidget(self.addItem)
+        buttonslayout.addWidget(self.clear)
+        buttonslayout.addWidget(self.save)
+        mainlayout.addLayout(buttonslayout)
+        mainlayout.addWidget(self.list)
+        self.centralwidget.setLayout(mainlayout)
+
+        # Attach functions to buttons
         self.addItem.clicked.connect(self.add_it)
         self.deleteItem.clicked.connect(self.delete_it)
         self.clear.clicked.connect(self.clear_list)
@@ -28,12 +42,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Load items from database
         conn = sqlite3.connect('todoitems.db')
         c = conn.cursor()  
-
         c.execute("SELECT * FROM items")
         items = c.fetchall()
         for i in items:
             self.list.addItem(str(i[0]))
-        
         conn.commit()
         conn.close()
 
@@ -49,7 +61,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         conn = sqlite3.connect('todoitems.db')
         c = conn.cursor() 
         c.execute("DELETE FROM items;")
-
         items = []
         for i in range(self.list.count()):
             items.append(self.list.item(i))
@@ -57,7 +68,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             {
                 'item': self.list.item(i).text()
             })
-
         conn.commit()
         conn.close()       
 
@@ -71,7 +81,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def add_it(self):
         item = self.input.text()
         if item != "" and item.isspace() != True:
-            self.list.addItem(f'{self.list.count() + 1}.  {item}')
+            self.list.addItem(item)
             self.input.setText("")
     
     # Deletes selected row
@@ -86,4 +96,3 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 app = QtWidgets.QApplication([])
 mw = MainWindow()
 app.exec_()
-conn.close()
