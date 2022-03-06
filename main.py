@@ -1,7 +1,9 @@
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QMessageBox, QVBoxLayout, QHBoxLayout 
-from design import Ui_MainWindow
+from design import Ui_MainWindow as mainui
+from logodesign import Ui_MainWindow as logoui
 import sqlite3
+import sys
 
 # Connect to SQLite3 Database
 conn = sqlite3.connect('todoitems.db')
@@ -15,11 +17,12 @@ conn.commit()
 conn.close()
 
 # Create MainWindow (UI comes from design.py file)
-class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+class MainWindow(QtWidgets.QMainWindow, mainui):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.setWindowTitle("To-Do List")
+        self.w = None
 
         # Set layouts (for window scaling)
         mainlayout = QVBoxLayout()
@@ -93,6 +96,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def clear_list(self):
         self.list.clear()
 
-app = QtWidgets.QApplication([])
-mw = MainWindow()
-app.exec_()
+# add a login window at startup
+class LoginWindow(QtWidgets.QMainWindow, logoui):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setupUi(self)
+        self.setWindowTitle('Login')
+        self.w = None
+        self.loginButton.clicked.connect(self.showMain)
+        self.show()
+
+    def showMain(self):
+        self.w = MainWindow()
+        self.w.show()
+        self.hide()
+
+app = QtWidgets.QApplication(sys.argv)
+w = LoginWindow()
+w.show()
+app.exec()
