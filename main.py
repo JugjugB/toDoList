@@ -6,42 +6,41 @@ from uiDesigns.createaccountdesign import Ui_MainWindow as createui
 import sqlite3
 import sys
 
-# Connect to SQLite3 Database
-conn = sqlite3.connect('databases/todoitems.db') # database for list items
-c = conn.cursor()
+# Connect to accounts database
 
-c.execute("""CREATE TABLE if not exists items (
-        item text
-        )""")
-
-conn.commit()
-conn.close()
-
-conn2 = sqlite3.connect('databases/accountdetails.db') # database for account usernames/passwords
+conn2 = sqlite3.connect('databases/accountDetails.db')
 c2 = conn2.cursor()
-
 c2.execute("""CREATE TABLE if not exists accounts (
         username text,
         password text
         )""")
-
 conn2.commit()
 conn2.close()
 
 # Create MainWindow (UI comes from design.py file)
 class MainWindow(QtWidgets.QMainWindow, mainui):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, username, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
         self.setWindowTitle("To-Do List")
         self.w = None
 
+        # creates a separate database for each user
+        self.userdb = 'databases/' + username + '.db'
+        conn = sqlite3.connect(self.userdb) # database for list items
+        c = conn.cursor()
+        c.execute("""CREATE TABLE if not exists items (
+                item text
+                )""")
+        conn.commit()
+        conn.close()
+
         # Set layouts (for window scaling)
         mainlayout = QVBoxLayout()
         mainlayout.addWidget(self.input)
         buttonslayout = QHBoxLayout()
-        buttonslayout.addWidget(self.deleteItem)
         buttonslayout.addWidget(self.addItem)
+        buttonslayout.addWidget(self.deleteItem)
         buttonslayout.addWidget(self.clear)
         buttonslayout.addWidget(self.save)
         mainlayout.addLayout(buttonslayout)
@@ -55,7 +54,7 @@ class MainWindow(QtWidgets.QMainWindow, mainui):
         self.save.clicked.connect(self.save_list)
 
         # Load items from database
-        conn = sqlite3.connect('databases/todoitems.db')
+        conn = sqlite3.connect(self.userdb)
         c = conn.cursor()  
         c.execute("SELECT * FROM items")
         items = c.fetchall()
@@ -63,8 +62,6 @@ class MainWindow(QtWidgets.QMainWindow, mainui):
             self.list.addItem(str(i[0]))
         conn.commit()
         conn.close()
-
-        self.show()
     
     # Adds item when enter/return is pressed
     def keyPressEvent(self, event):
@@ -73,7 +70,7 @@ class MainWindow(QtWidgets.QMainWindow, mainui):
 
     # Saves list to database
     def save_list(self):
-        conn = sqlite3.connect('databases/todoitems.db')
+        conn = sqlite3.connect(self.userdb)
         c = conn.cursor() 
         c.execute("DELETE FROM items;")
         items = []
@@ -90,7 +87,7 @@ class MainWindow(QtWidgets.QMainWindow, mainui):
         msg = QMessageBox()
         msg.setWindowTitle("Saved to Database!")
         msg.setText("Your To-Do List Has Been Saved!") 
-        x = msg.exec()
+        msg.exec()
     
     # Function to add item in input box
     def add_it(self):
@@ -116,6 +113,7 @@ class CreateWindow(QtWidgets.QMainWindow, createui):
         self.setWindowTitle('Create an Account')
         self.createButton.clicked.connect(self.submitAccount)
         self.returnButton.clicked.connect(self.returnLogin)
+        self.passwordInput.setEchoMode(QtWidgets.QLineEdit.Password)
         self.show()
 
     # submits new account to database
@@ -138,7 +136,7 @@ class CreateWindow(QtWidgets.QMainWindow, createui):
             self.passwordInput.setText("")
 
         if username != None and password != None:
-            conn2 = sqlite3.connect('databases/accountdetails.db')
+            conn2 = sqlite3.connect('databases/accountDetails.db')
             c2 = conn2.cursor()  
             c2.execute("INSERT INTO accounts VALUES (?,?)", (username, password))
             conn2.commit()
@@ -147,10 +145,12 @@ class CreateWindow(QtWidgets.QMainWindow, createui):
             msg = QMessageBox()
             msg.setWindowTitle("Account Created!")
             msg.setText("Account created successfully!") 
-            x = msg.exec()
+            msg.exec()
+
+            self.lw = LoginWindow()
+            self.lw.show()
+            self.close()
         
-        self.usernameInput.setText("")
-        self.passwordInput.setText("")
 
     # returns user to login window
     def returnLogin(self):
@@ -173,10 +173,10 @@ class LoginWindow(QtWidgets.QMainWindow, logoui):
         self.createaccountButton.clicked.connect(self.createAccount)
         self.passwordInput.setEchoMode(QtWidgets.QLineEdit.Password)
         self.show()
-
+    
     # validates username/password
     def verifyAccount(self):
-        conn2 = sqlite3.connect('databases/accountdetails.db')
+        conn2 = sqlite3.connect('databases/accountDetails.db')
         c2 = conn2.cursor()  
         c2.execute("SELECT * FROM accounts")
         accounts = c2.fetchall()
@@ -190,9 +190,12 @@ class LoginWindow(QtWidgets.QMainWindow, logoui):
 
         for i in accounts:
             if username == i[0] and password == i[1]:
-                self.showMain() # show main window if account is validated
+                self.mw = MainWindow(username)
+                self.mw.show()
+                self.close()
                 valid = True
-            
+        
+        # shows pop-up message if validation fails
         if valid is False: 
             msg = QMessageBox()
             msg.setWindowTitle('Login failed')
@@ -205,12 +208,6 @@ class LoginWindow(QtWidgets.QMainWindow, logoui):
     def createAccount(self):
         self.cw = CreateWindow()
         self.cw.show()
-        self.close()
-
-    # shows main window
-    def showMain(self):
-        self.mw = MainWindow()
-        self.mw.show()
         self.close()
 
     def keyPressEvent(self, event):
