@@ -51,7 +51,7 @@ class Ui_MainWindow(object):
         self.addItem.setText(_translate("MainWindow", "Add Item"))
         self.clear.setText(_translate("MainWindow", "Clear List"))
         self.save.setText(_translate("MainWindow", "Save List"))
-        self.returnLogin.setText(_translate("MainWindow", "Login"))
+        self.returnLogin.setText(_translate("MainWindow", "Logout"))
 
 
 if __name__ == "__main__":
